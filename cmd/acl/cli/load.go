@@ -26,7 +26,7 @@ type loadResult struct {
 }
 
 func loadRunE(cmd *cobra.Command, args []string) error {
-	aclFolder := args[1]
+	aclFolder := args[0]
 	result := loadResult{}
 
 	if aclmgr.AclExistOnDevice(aclFolder) {
