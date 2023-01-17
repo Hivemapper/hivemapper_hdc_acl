@@ -43,7 +43,7 @@ func loadRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to marshal result: %w", err)
 	}
 	hexData := hex.EncodeToString(data)
-	fmt.Println(hexData) //this will be read as command output ...
+	fmt.Print(hexData) //this will be read as command output ...
 
 	return nil
 }
