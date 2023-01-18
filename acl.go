@@ -71,6 +71,24 @@ func AclExistOnDevice(sourceFolder string) bool {
 	return true
 }
 
+func AclClearFromDevice(sourceFolder string) error {
+	aclFile := path.Join(sourceFolder, AclFileName)
+	if _, err := os.Stat(aclFile); err == nil {
+		if err := os.Remove(aclFile); err != nil {
+			return fmt.Errorf("removing acl file: %s", err)
+		}
+	}
+
+	signatureFile := path.Join(sourceFolder, AclSignatureFileName)
+	if _, err := os.Stat(signatureFile); err == nil {
+		if err := os.Remove(signatureFile); err != nil {
+			return fmt.Errorf("removing acl file: %s", err)
+		}
+	}
+
+	return nil
+}
+
 func (a *Acl) Store(destinationFolder string, signature solana.Signature) error {
 	data, err := json.Marshal(a)
 	if err != nil {
