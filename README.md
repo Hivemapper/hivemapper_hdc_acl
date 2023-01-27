@@ -1,16 +1,31 @@
 # Hivemapper hdc acl manager
 
+## ACL json representation
+```json 
+{
+  "acl": {
+    "managers": ["0000000000000000000000000000000000000000", "0000000000000000000000000000000000000000","0000000000000000000000000000000000000000"],
+    "driver": ["0000000000000000000000000000000000000000", "0000000000000000000000000000000000000000","0000000000000000000000000000000000000000"] 
+  },
+  "signature": "0000000000000000000000000000000000000000000000000000000000000000"
+}
+```
 
-Run this command to store an ACL from tha HDC. That acl and the signature will be stored in the destination folder ...
+Run this command to store an ACL from tha HDC.
+- `{hex_acl}` is the HEX representation of the ACL
+- `{b85_signature}` is the base85 representation of the signature of the ACL json
+- `{destination}` is the path where ACL will be stored 
 ```bash
 acl store {hex_acl} {b85_signature} {destination}
 ```
 
 Run this command to retrieve the ACL from the HDC. The ACL will be printed as a HEX representation of the ACL json
+- `{destination}` is the path where ACL is stored
 ```bash
 acl load {source_path}
 ```
 
+## Load result json
 ```json 
 {
   "acl": {
