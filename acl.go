@@ -17,6 +17,7 @@ const AclFileName = "acl.data"
 const AclSignatureFileName = "acl.signatureB58"
 
 type Acl struct {
+	Version  string   `json:"version"`
 	Managers []string `json:"managers"`
 	Drivers  []string `json:"drivers"`
 }
