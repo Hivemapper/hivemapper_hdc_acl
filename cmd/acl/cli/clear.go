@@ -21,6 +21,9 @@ func init() {
 func clearRunE(cmd *cobra.Command, args []string) error {
 	aclFolder := args[0]
 
+	//todo: add signature parameter
+	//todo: validate signature signature against acl
+
 	if aclmgr.AclExistOnDevice(aclFolder) {
 		if err := aclmgr.AclClearFromDevice(aclFolder); err != nil {
 			return fmt.Errorf("unable to clear acl: %w", err)
