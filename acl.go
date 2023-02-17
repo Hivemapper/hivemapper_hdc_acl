@@ -14,7 +14,7 @@ import (
 )
 
 const AclFileName = "acl.data"
-const AclSignatureFileName = "acl.signatureB58"
+const AclSignatureFileName = "acl.signature"
 
 type Acl struct {
 	Version  string   `json:"version", omitempty`
