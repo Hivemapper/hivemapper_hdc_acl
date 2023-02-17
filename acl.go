@@ -17,7 +17,7 @@ const AclFileName = "acl.data"
 const AclSignatureFileName = "acl.signatureB58"
 
 type Acl struct {
-	Version  string   `json:"version"`
+	Version  string   `json:"version", omitempty`
 	Managers []string `json:"managers"`
 	Drivers  []string `json:"drivers"`
 }
@@ -115,7 +115,14 @@ func (a *Acl) Store(destinationFolder string, signature solana.Signature) error 
 
 func (a *Acl) legacyMessageToSign() ([]byte, error) {
 
-	data, err := json.Marshal(a)
+	hashableAcl := struct {
+		Managers []string `json:"managers"`
+		Drivers  []string `json:"drivers"`
+	}{
+		Managers: a.Managers,
+		Drivers:  a.Drivers,
+	}
+	data, err := json.Marshal(hashableAcl)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling acl: %s", err)
 	}
@@ -124,7 +131,15 @@ func (a *Acl) legacyMessageToSign() ([]byte, error) {
 }
 func (a *Acl) messageToSign() ([]byte, error) {
 
-	data, err := json.Marshal(a)
+	hashableAcl := struct {
+		Managers []string `json:"managers"`
+		Drivers  []string `json:"drivers"`
+	}{
+		Managers: a.Managers,
+		Drivers:  a.Drivers,
+	}
+
+	data, err := json.Marshal(hashableAcl)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling acl: %s", err)
 	}
@@ -135,7 +150,7 @@ func (a *Acl) messageToSign() ([]byte, error) {
 	hash := h.Sum(nil)
 	hexHash := hex.EncodeToString(hash)
 
-	message := fmt.Sprintf("Lock Camera with Access Control List with %d manager(s) and %d driver(s). Hash: %s", len(a.Managers), len(a.Drivers), hexHash)
+	message := fmt.Sprintf("Access Control List with %d manager(s) and %d driver(s). Hash: %s", len(a.Managers), len(a.Drivers), hexHash)
 
 	return []byte(message), nil
 }

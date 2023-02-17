@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +18,6 @@ func init() {
 }
 
 func versionRunE(cmd *cobra.Command, args []string) error {
-	println("1.1.0")
+	fmt.Print("1.1.0")
 	return nil
 }
