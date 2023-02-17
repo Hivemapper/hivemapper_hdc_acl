@@ -44,18 +44,12 @@ func storeRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to decode signature: %w", err)
 	}
 
-	for _, managerAddress := range acl.Managers {
-		pubKey, err := solana.PublicKeyFromBase58(managerAddress)
+	if acl.ValidateSignature(signature) {
+		err = acl.Store(aclFolder, signature)
 		if err != nil {
-			return fmt.Errorf("unable to decode manager address: %w", err)
+			return fmt.Errorf("unable to store acl: %w", err)
 		}
-		if signature.Verify(pubKey, aclData) {
-			err = acl.Store(aclFolder, signature)
-			if err != nil {
-				return fmt.Errorf("unable to store acl: %w", err)
-			}
-			return nil
-		}
+		return nil
 	}
 
 	return fmt.Errorf("invalid signature")

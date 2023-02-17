@@ -42,6 +42,7 @@ func loadRunE(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("unable to marshal result: %w", err)
 	}
+
 	hexData := hex.EncodeToString(data)
 	fmt.Print(hexData) //this will be read as command output ...
 
