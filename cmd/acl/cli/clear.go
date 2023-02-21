@@ -1,10 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
-	"github.com/streamingfast/solana-go"
-
 	"github.com/spf13/cobra"
 	aclmgr "github.com/streamingfast/hivemapper_hdc_acl"
 )
@@ -27,29 +23,9 @@ func clearRunE(cmd *cobra.Command, args []string) error {
 		signatureB58 = args[1]
 	}
 
-	if aclmgr.AclExistOnDevice(aclFolder) {
-		acl, _, err := aclmgr.NewAclFromFile(aclFolder)
-		if err != nil {
-			return fmt.Errorf("unable to read acl: %w", err)
-		}
-
-		if acl.Version != "" && signatureB58 == "" {
-			return fmt.Errorf("ACL on device requires a signature to be cleared")
-		}
-
-		if signatureB58 != "" {
-			signature, err := solana.NewSignatureFromBase58(signatureB58)
-			if err != nil {
-				return fmt.Errorf("unable to decode signature: %w", err)
-			}
-			if !acl.ValidateSignature(signature) {
-				return fmt.Errorf("invalid signature")
-			}
-		}
-
-		if err := aclmgr.AclClearFromDevice(aclFolder); err != nil {
-			return fmt.Errorf("unable to clear acl: %w", err)
-		}
+	err := aclmgr.AclClearFromDevice(aclFolder, signatureB58)
+	if err != nil {
+		return err
 	}
 
 	return nil

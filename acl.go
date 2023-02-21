@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 
@@ -74,7 +75,37 @@ func AclExistOnDevice(sourceFolder string) bool {
 	return true
 }
 
-func AclClearFromDevice(sourceFolder string) error {
+var SignatureRequiredErr = fmt.Errorf("ACL on device requires a signature to be cleared")
+
+func AclClearFromDevice(aclFolder string, signatureB58 string) error {
+	if AclExistOnDevice(aclFolder) {
+		acl, _, err := NewAclFromFile(aclFolder)
+		if err != nil {
+			return fmt.Errorf("unable to read acl: %w", err)
+		}
+
+		if acl.Version != "" && signatureB58 == "" {
+			return SignatureRequiredErr
+		}
+
+		if signatureB58 != "" {
+			signature, err := solana.NewSignatureFromBase58(signatureB58)
+			if err != nil {
+				return fmt.Errorf("unable to decode signature: %w", err)
+			}
+			if !acl.ValidateSignature(signature) {
+				return fmt.Errorf("invalid signature")
+			}
+		}
+
+		if err := aclClearFromDevice(aclFolder); err != nil {
+			return fmt.Errorf("unable to clear acl: %w", err)
+		}
+	}
+	return nil
+}
+
+func aclClearFromDevice(sourceFolder string) error {
 	aclFile := path.Join(sourceFolder, AclFileName)
 	if _, err := os.Stat(aclFile); err == nil {
 		if err := os.Remove(aclFile); err != nil {
@@ -98,6 +129,9 @@ func (a *Acl) Store(destinationFolder string, signature solana.Signature) error 
 		return fmt.Errorf("marshalling acl: %s", err)
 	}
 
+	if err := os.MkdirAll(destinationFolder, os.ModePerm); err != nil {
+		log.Fatal(err)
+	}
 	aclFile := path.Join(destinationFolder, AclFileName)
 	err = os.WriteFile(aclFile, data, 0644)
 	if err != nil {

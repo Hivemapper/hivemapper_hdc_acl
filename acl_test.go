@@ -1,6 +1,8 @@
 package hivemapper_hdc_acl
 
 import (
+	"os"
+	"path"
 	"testing"
 
 	"github.com/streamingfast/solana-go"
@@ -43,4 +45,55 @@ func Test_messageToSign(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "Access Control List with 1 manager(s) and 55 driver(s). Hash: 492238a930883b0dd6ed791dc1e0152a", string(message))
+}
+
+func Test_AclClearFromDevice(t *testing.T) {
+	aclFolder := "/tmp/acl"
+	os.RemoveAll(aclFolder)
+
+	acl, err := NewAclFromData([]byte(aclJson))
+	signature, err := solana.NewSignatureFromBase58(signatureB58)
+
+	err = acl.Store(aclFolder, signature)
+	require.NoError(t, err)
+
+	exist := AclExistOnDevice(aclFolder)
+	require.True(t, exist)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.NoError(t, err)
+
+	err = AclClearFromDevice(aclFolder, "")
+	require.NoError(t, err)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.True(t, os.IsNotExist(err))
+	_, err = os.Stat(path.Join(aclFolder, AclSignatureFileName))
+	require.True(t, os.IsNotExist(err))
+}
+
+func Test_AclClearFromDeviceWithSign(t *testing.T) {
+	aclFolder := "/tmp/acl"
+	os.RemoveAll(aclFolder)
+
+	acl, err := NewAclFromData([]byte(aclJson))
+	acl.Version = "9.9.9"
+	signature, err := solana.NewSignatureFromBase58(signatureB58)
+
+	err = acl.Store(aclFolder, signature)
+	require.NoError(t, err)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.NoError(t, err)
+
+	err = AclClearFromDevice(aclFolder, "")
+	require.ErrorIs(t, SignatureRequiredErr, err)
+
+	err = AclClearFromDevice(aclFolder, signature.String())
+	require.NoError(t, err)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.True(t, os.IsNotExist(err))
+	_, err = os.Stat(path.Join(aclFolder, AclSignatureFileName))
+	require.True(t, os.IsNotExist(err))
 }
