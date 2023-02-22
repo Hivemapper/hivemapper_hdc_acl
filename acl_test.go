@@ -26,6 +26,25 @@ func TestAcl_ValidateSignature(t *testing.T) {
 	require.True(t, valid)
 }
 
+func TestAcl_EmptyAcl(t *testing.T) {
+	aclFolder := "/tmp/acl"
+	os.RemoveAll(aclFolder)
+
+	var acl *Acl
+	acl = &Acl{}
+	//acl, err := NewAclFromData([]byte(""))
+	//require.NoError(t, err)
+	//fmt.Println(acl)
+	signature, err := solana.NewSignatureFromBase58(signatureB58)
+	require.NoError(t, err)
+
+	acl.Store(aclFolder, signature)
+	//require.NoError(t, err)
+	//
+	//valid := acl.ValidateSignature(signature)
+	//require.True(t, valid)
+}
+
 func TestAcl_ValidateLegacySignature(t *testing.T) {
 	acl, err := NewAclFromData([]byte(legacyAclJson))
 	require.NoError(t, err)

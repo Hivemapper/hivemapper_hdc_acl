@@ -133,6 +133,11 @@ func (a *Acl) Store(destinationFolder string, signature solana.Signature) error 
 		log.Fatal(err)
 	}
 	aclFile := path.Join(destinationFolder, AclFileName)
+
+	if len(data) == 0 {
+		panic("empty acl")
+	}
+
 	err = os.WriteFile(aclFile, data, 0644)
 	if err != nil {
 		return fmt.Errorf("writing acl file: %s", err)
