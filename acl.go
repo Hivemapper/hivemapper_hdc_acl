@@ -18,9 +18,10 @@ const AclFileName = "acl.data"
 const AclSignatureFileName = "acl.signature"
 
 type Acl struct {
-	Version  string   `json:"version", omitempty`
-	Managers []string `json:"managers"`
-	Drivers  []string `json:"drivers"`
+	Version   string   `json:"version", omitempty`
+	Managers  []string `json:"managers"`
+	Drivers   []string `json:"drivers"`
+	FleetName string   `json:"fleetName"`
 }
 
 func NewAclFromFile(sourceFolder string) (*Acl, solana.Signature, error) {
@@ -93,7 +94,7 @@ func AclClearFromDevice(aclFolder string, signatureB58 string) error {
 			if err != nil {
 				return fmt.Errorf("unable to decode signature: %w", err)
 			}
-			if !acl.ValidateSignature(signature) {
+			if !acl.ValidateClearSignature(signature) {
 				return fmt.Errorf("invalid signature")
 			}
 		}
@@ -152,7 +153,14 @@ func (a *Acl) Store(destinationFolder string, signature solana.Signature) error 
 	return nil
 }
 
-func (a *Acl) legacyMessageToSign() ([]byte, error) {
+func (a *Acl) clearMessageToSign() ([]byte, error) {
+
+	message := fmt.Sprintf("Clearing Access Control List for fleet %s", a.FleetName)
+
+	return []byte(message), nil
+}
+
+func (a *Acl) legacyStoreMessageToSign() ([]byte, error) {
 
 	hashableAcl := struct {
 		Managers []string `json:"managers"`
@@ -168,7 +176,7 @@ func (a *Acl) legacyMessageToSign() ([]byte, error) {
 
 	return data, nil
 }
-func (a *Acl) messageToSign() ([]byte, error) {
+func (a *Acl) storeMessageToSign() ([]byte, error) {
 
 	hashableAcl := struct {
 		Managers []string `json:"managers"`
@@ -194,8 +202,8 @@ func (a *Acl) messageToSign() ([]byte, error) {
 	return []byte(message), nil
 }
 
-func (a *Acl) ValidateSignature(signature solana.Signature) bool {
-	data, err := a.messageToSign()
+func (a *Acl) ValidateStoreSignature(signature solana.Signature) bool {
+	data, err := a.storeMessageToSign()
 	if err != nil {
 		return false
 	}
@@ -204,7 +212,15 @@ func (a *Acl) ValidateSignature(signature solana.Signature) bool {
 		return true
 	}
 
-	data, err = a.legacyMessageToSign()
+	data, err = a.legacyStoreMessageToSign()
+	return a.validateSignature(data, signature)
+}
+
+func (a *Acl) ValidateClearSignature(signature solana.Signature) bool {
+	data, err := a.clearMessageToSign()
+	if err != nil {
+		return false
+	}
 	return a.validateSignature(data, signature)
 }
 

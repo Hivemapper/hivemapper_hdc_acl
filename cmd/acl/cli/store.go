@@ -44,7 +44,7 @@ func storeRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to decode signature: %w", err)
 	}
 
-	if acl.ValidateSignature(signature) {
+	if acl.ValidateStoreSignature(signature) {
 		err = acl.Store(aclFolder, signature)
 		if err != nil {
 			return fmt.Errorf("unable to store acl: %w", err)
