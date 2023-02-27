@@ -20,10 +20,10 @@ const AclSignatureFileName = "acl.signature"
 var ErrSignatureRequired = fmt.Errorf("ACL on device requires a signature to be cleared")
 
 type Acl struct {
-	Version   string   `json:"version", omitempty`
+	Version   string   `json:"version,omitempty"`
 	Managers  []string `json:"managers"`
 	Drivers   []string `json:"drivers"`
-	FleetName string   `json:"fleetName", omitempty`
+	FleetName string   `json:"fleetName,omitempty"`
 }
 
 func NewAclFromFile(sourceFolder string) (*Acl, solana.Signature, error) {
@@ -177,13 +177,16 @@ func (a *Acl) legacyStoreMessageToSign() ([]byte, error) {
 
 func (a *Acl) storeMessageToSign() ([]byte, error) {
 	hashableAcl := struct {
-		FleetName string   `json:"fleetName"`
+		FleetName string   `json:"fleetName,omitempty"`
 		Managers  []string `json:"managers"`
 		Drivers   []string `json:"drivers"`
 	}{
-		FleetName: a.FleetName,
-		Managers:  a.Managers,
-		Drivers:   a.Drivers,
+		Managers: a.Managers,
+		Drivers:  a.Drivers,
+	}
+
+	if a.FleetName != "" {
+		hashableAcl.FleetName = a.FleetName
 	}
 
 	data, err := json.Marshal(hashableAcl)
