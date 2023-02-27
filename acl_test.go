@@ -14,7 +14,7 @@ const signatureB58 = `3drYb1k1HmnP6ubDWsVVZx4qsRBhBuWST1YsvTdnDpKhEyTgP1Nrxq53s7
 
 const clearAclJson = `{"managers":["3Pa4DNHKyEPJ5YQPaQBRDggstgmd89Zhr4yVMndo6T4C"],"drivers":["AW2MMchomiqbyfKUu1CkUF8n9P41H9y7C6H6MhdYkWXf"]}`
 const clearAclJsonSignatureB58 = `Brz2oAM8YR8m78xLH5CVWgwZdbiCyc2WZ6ZsBYjCtAwjaXkuyXirqueBNSAnowyRFXWvbV1PiyGP2AfBfgiER1u`
-const clearAclWithJsonFleetName = `{"managers":["3Pa4DNHKyEPJ5YQPaQBRDggstgmd89Zhr4yVMndo6T4C"],"drivers":["AW2MMchomiqbyfKUu1CkUF8n9P41H9y7C6H6MhdYkWXf"],"fleetName":"graveful-thistle-pig"}`
+const clearAclJsonWithFleetName = `{"managers":["3Pa4DNHKyEPJ5YQPaQBRDggstgmd89Zhr4yVMndo6T4C"],"drivers":["AW2MMchomiqbyfKUu1CkUF8n9P41H9y7C6H6MhdYkWXf"],"fleetName":"graveful-thistle-pig"}`
 const clearAclWithFleetNameSignatureBS58 = "2TD922GcdnkkVedKeZoy9XGPzGkF7Z9erQt1z3ktGgHCUYVcxbMYXx9wwvUHqF9P2K9hGs9D7j9pngCTLQeup8gx"
 
 const legacyAclJson = `{"managers":["2hBiLi6AQ59knbq8eoonWa4rHS6NdWaqvmA9FBipC5Gf","3bhrVE8tFQYWEcwVgjaXw1FFYx4rorHpMKRuJRGHGjyR","8ZC6P1vjm3WNQ19eCYWWY6SbzWGyF2vaQdyw4DQ5Ky7T","94BBSnkJ2E8SaHRTBVHcLV5ey6EXzPu4oBGKv7ghfKdK","97pv7DTLsDw1AskKQsu5FskcCBpAReVQrLuyyoqxP58q","98juY4BXARPMrwTteeRMEiM51boSFvVHJcyRwsf8niMH","9z2eycrbn6U24qEsJCVYTeqSbbihjRxzFGmifTZhKX7w"],"drivers":["3bhrVE8tFQYWEcwVgjaXw1FFYx4rorHpMKRuJRGHGjyR","3gp5bL9kksMPAgeiV4MEysUBwZ4Bi99s9AksdXdqFsgz","7ZSt2K1SoSDeVwMhsTZ7QAV6TEPXMy2HCySvMouybW6S","8ZC6P1vjm3WNQ19eCYWWY6SbzWGyF2vaQdyw4DQ5Ky7T","97pv7DTLsDw1AskKQsu5FskcCBpAReVQrLuyyoqxP58q","9SNiQuTjkvTrXGDiE3KHfKtSFdzFVHgz9LfvdypqGvYq","9z2eycrbn6U24qEsJCVYTeqSbbihjRxzFGmifTZhKX7w","Cx8kfR2bsL8yxgATkMqxxjtfYFWK1DCASbj2KgADWCSL","GD6mXRyysUWbDmLNkoowhUzQ2gHk6hwSHkYrNXTGx3oF","HvdiwErbqgEJRu6oUSA1PpDodpJ1U3wvhEprtJEajyvM"]}`
@@ -83,7 +83,7 @@ func Test_messageClearToSign(t *testing.T) {
 }
 
 func Test_ValidateLegacyMessageClearToSign(t *testing.T) {
-	acl, err := NewAclFromData([]byte(clearAclWithJsonFleetName))
+	acl, err := NewAclFromData([]byte(clearAclJsonWithFleetName))
 	acl.FleetName = "graveful-thistle-pig"
 	require.NoError(t, err)
 
@@ -93,32 +93,7 @@ func Test_ValidateLegacyMessageClearToSign(t *testing.T) {
 	require.Equal(t, "Clearing Access Control List for fleet graveful-thistle-pig", string(message))
 }
 
-func Test_ValidateMessageClearToSign(t *testing.T) {
-	aclFolder := "/tmp/acl"
-	_ = os.RemoveAll(aclFolder)
-
-	acl, err := NewAclFromData([]byte(clearAclWithJsonFleetName))
-	signature, err := solana.NewSignatureFromBase58(clearAclWithFleetNameSignatureBS58)
-
-	err = acl.Store(aclFolder, signature)
-	require.NoError(t, err)
-
-	exist := AclExistOnDevice(aclFolder)
-	require.True(t, exist)
-
-	_, err = os.Stat(path.Join(aclFolder, AclFileName))
-	require.NoError(t, err)
-
-	err = AclClearFromDevice(aclFolder, "")
-	require.NoError(t, err)
-
-	_, err = os.Stat(path.Join(aclFolder, AclFileName))
-	require.True(t, os.IsNotExist(err))
-	_, err = os.Stat(path.Join(aclFolder, AclSignatureFileName))
-	require.True(t, os.IsNotExist(err))
-}
-
-func Test_AclClearFromDevice(t *testing.T) {
+func Test_LegacyAclClearFromDeviceWithoutSignature(t *testing.T) {
 	aclFolder := "/tmp/acl"
 	_ = os.RemoveAll(aclFolder)
 
@@ -139,11 +114,12 @@ func Test_AclClearFromDevice(t *testing.T) {
 
 	_, err = os.Stat(path.Join(aclFolder, AclFileName))
 	require.True(t, os.IsNotExist(err))
+
 	_, err = os.Stat(path.Join(aclFolder, AclSignatureFileName))
 	require.True(t, os.IsNotExist(err))
 }
 
-func Test_AclClearFromDeviceWithSign(t *testing.T) {
+func Test_AclClearFromDeviceWithoutSignature(t *testing.T) {
 	aclFolder := "/tmp/acl"
 	_ = os.RemoveAll(aclFolder)
 
@@ -160,12 +136,55 @@ func Test_AclClearFromDeviceWithSign(t *testing.T) {
 
 	err = AclClearFromDevice(aclFolder, "")
 	require.ErrorIs(t, ErrSignatureRequired, err)
+}
+
+func Test_AclClearFromDeviceWithSignature(t *testing.T) {
+	aclFolder := "/tmp/acl"
+	_ = os.RemoveAll(aclFolder)
+
+	acl, err := NewAclFromData([]byte(clearAclJson))
+	acl.Version = "9.9.9"
+	acl.FleetName = "Pere Noel Hivrogne"
+	signature, err := solana.NewSignatureFromBase58(clearAclJsonSignatureB58)
+
+	err = acl.Store(aclFolder, signature)
+	require.NoError(t, err)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.NoError(t, err)
 
 	err = AclClearFromDevice(aclFolder, signature.String())
 	require.NoError(t, err)
 
 	_, err = os.Stat(path.Join(aclFolder, AclFileName))
 	require.True(t, os.IsNotExist(err))
+
+	_, err = os.Stat(path.Join(aclFolder, AclSignatureFileName))
+	require.True(t, os.IsNotExist(err))
+}
+
+func Test_AclJsonWithFleetNameClearFromDeviceWithSignature(t *testing.T) {
+	aclFolder := "/tmp/acl"
+	_ = os.RemoveAll(aclFolder)
+
+	acl, err := NewAclFromData([]byte(clearAclJsonWithFleetName))
+	signature, err := solana.NewSignatureFromBase58(clearAclWithFleetNameSignatureBS58)
+
+	err = acl.Store(aclFolder, signature)
+	require.NoError(t, err)
+
+	exist := AclExistOnDevice(aclFolder)
+	require.True(t, exist)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.NoError(t, err)
+
+	err = AclClearFromDevice(aclFolder, "")
+	require.NoError(t, err)
+
+	_, err = os.Stat(path.Join(aclFolder, AclFileName))
+	require.True(t, os.IsNotExist(err))
+
 	_, err = os.Stat(path.Join(aclFolder, AclSignatureFileName))
 	require.True(t, os.IsNotExist(err))
 }
