@@ -21,8 +21,7 @@ func init() {
 }
 
 type loadResult struct {
-	Acl       *aclmgr.Acl `json:"acl"`
-	Signature []byte      `json:"signature"`
+	Acl *aclmgr.Acl `json:"acl"`
 }
 
 func loadRunE(cmd *cobra.Command, args []string) error {
@@ -30,12 +29,11 @@ func loadRunE(cmd *cobra.Command, args []string) error {
 	result := loadResult{}
 
 	if aclmgr.AclExistOnDevice(aclFolder) {
-		acl, signature, err := aclmgr.NewAclFromFile(aclFolder)
+		acl, err := aclmgr.NewAclFromFile(aclFolder)
 		if err != nil {
 			panic(err)
 		}
 		result.Acl = acl
-		result.Signature = signature[:]
 	}
 
 	data, err := json.Marshal(result)

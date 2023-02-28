@@ -15,7 +15,6 @@ import (
 )
 
 const AclFileName = "acl.data"
-const AclSignatureFileName = "acl.signature"
 
 var ErrSignatureRequired = fmt.Errorf("ACL on device requires a signature to be cleared")
 
@@ -26,38 +25,23 @@ type Acl struct {
 	FleetName string   `json:"fleetName,omitempty"`
 }
 
-func NewAclFromFile(sourceFolder string) (*Acl, solana.Signature, error) {
+func NewAclFromFile(sourceFolder string) (*Acl, error) {
 	aclFile, err := os.Open(path.Join(sourceFolder, AclFileName))
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("opening acl aclFile: %s", err)
+		return nil, fmt.Errorf("opening acl aclFile: %s", err)
 	}
 
 	aclData, err := io.ReadAll(aclFile)
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("reading acl aclFile: %s", err)
+		return nil, fmt.Errorf("reading acl aclFile: %s", err)
 	}
 
 	acl, err := NewAclFromData(aclData)
 	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("creating acl: %s", err)
+		return nil, fmt.Errorf("creating acl: %s", err)
 	}
 
-	signatureFile, err := os.Open(path.Join(sourceFolder, AclSignatureFileName))
-	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("opening acl signatureB58 aclFile: %s", err)
-	}
-
-	signatureData, err := io.ReadAll(signatureFile)
-	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("reading acl signatureB58 aclFile: %s", err)
-	}
-
-	signature, err := solana.NewSignatureFromBytes(signatureData)
-	if err != nil {
-		return nil, solana.Signature{}, fmt.Errorf("creating signatureB58: %s", err)
-	}
-
-	return acl, signature, nil
+	return acl, nil
 }
 
 func NewAclFromData(data []byte) (*Acl, error) {
@@ -80,7 +64,7 @@ func AclExistOnDevice(sourceFolder string) bool {
 
 func AclClearFromDevice(aclFolder string, signatureB58 string) error {
 	if AclExistOnDevice(aclFolder) {
-		acl, _, err := NewAclFromFile(aclFolder)
+		acl, err := NewAclFromFile(aclFolder)
 		if err != nil {
 			return fmt.Errorf("unable to read acl: %w", err)
 		}
@@ -114,17 +98,14 @@ func aclClearFromDevice(sourceFolder string) error {
 		}
 	}
 
-	signatureFile := path.Join(sourceFolder, AclSignatureFileName)
-	if _, err := os.Stat(signatureFile); err == nil {
-		if err := os.Remove(signatureFile); err != nil {
-			return fmt.Errorf("removing acl file: %s", err)
-		}
-	}
-
 	return nil
 }
 
 func (a *Acl) Store(destinationFolder string, signature solana.Signature) error {
+	if !a.ValidateStoreSignature(signature) {
+		return fmt.Errorf("invalid signature")
+	}
+
 	data, err := json.Marshal(a)
 	if err != nil {
 		return fmt.Errorf("marshalling acl: %s", err)
@@ -140,12 +121,6 @@ func (a *Acl) Store(destinationFolder string, signature solana.Signature) error 
 	}
 
 	err = os.WriteFile(aclFile, data, 0644)
-	if err != nil {
-		return fmt.Errorf("writing acl file: %s", err)
-	}
-
-	signFile := path.Join(destinationFolder, AclSignatureFileName)
-	err = os.WriteFile(signFile, signature.ToSlice(), 0644)
 	if err != nil {
 		return fmt.Errorf("writing acl file: %s", err)
 	}
@@ -195,11 +170,11 @@ func (a *Acl) storeMessageToSign() ([]byte, error) {
 	}
 
 	h := md5.New()
-	io.WriteString(h, string(data))
+	s := string(data)
+	io.WriteString(h, s)
 
 	hash := h.Sum(nil)
 	hexHash := hex.EncodeToString(hash)
-
 	message := fmt.Sprintf("Access Control List with %d manager(s) and %d driver(s). Hash: %s", len(a.Managers), len(a.Drivers), hexHash)
 
 	return []byte(message), nil
