@@ -44,15 +44,11 @@ func storeRunE(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to decode signature: %w", err)
 	}
 
-	if acl.ValidateStoreSignature(signature) {
-		err = acl.Store(aclFolder, signature)
-		if err != nil {
-			return fmt.Errorf("unable to store acl: %w", err)
-		}
-		return nil
+	err = acl.Store(aclFolder, signature)
+	if err != nil {
+		return fmt.Errorf("unable to store acl: %w", err)
 	}
-
-	return fmt.Errorf("invalid signature")
+	return nil
 }
 
 func isGranted(newAcl *aclmgr.Acl, sourcePath string) bool {
@@ -60,7 +56,7 @@ func isGranted(newAcl *aclmgr.Acl, sourcePath string) bool {
 		return true
 	}
 
-	currentAcl, _, err := aclmgr.NewAclFromFile(sourcePath)
+	currentAcl, err := aclmgr.NewAclFromFile(sourcePath)
 	if err != nil {
 		panic(err)
 	}
