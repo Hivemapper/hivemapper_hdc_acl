@@ -43,6 +43,21 @@ func TestAcl_EmptyAcl(t *testing.T) {
 	acl.Store(aclFolder, signature)
 }
 
+func TestCorruptedAcl_EmptyAcl(t *testing.T) {
+	aclFolder := "/tmp"
+	_ = os.RemoveAll(aclFolder)
+
+	f, err := os.OpenFile(path.Join(aclFolder, AclFileName), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	require.NoError(t, err)
+
+	err = f.Close()
+	require.NoError(t, err)
+
+	require.Panics(t, func() {
+		_, _ = NewAclFromFile(aclFolder)
+	})
+}
+
 func TestAcl_ValidateLegacySignature(t *testing.T) {
 	acl, err := NewAclFromData([]byte(legacyAclJson))
 	require.NoError(t, err)

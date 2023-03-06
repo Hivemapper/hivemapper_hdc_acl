@@ -36,6 +36,14 @@ func NewAclFromFile(sourceFolder string) (*Acl, error) {
 		return nil, fmt.Errorf("reading acl aclFile: %s", err)
 	}
 
+	if len(aclData) == 0 {
+		err := clearCorruptedAcl(sourceFolder)
+		if err != nil {
+			return nil, err
+		}
+		panic("Found and removed corrupted ACL. Please try locking again.")
+	}
+
 	acl, err := NewAclFromData(aclData)
 	if err != nil {
 		return nil, fmt.Errorf("creating acl: %s", err)
@@ -87,6 +95,17 @@ func AclClearFromDevice(aclFolder string, signatureB58 string) error {
 			return fmt.Errorf("unable to clear acl: %w", err)
 		}
 	}
+	return nil
+}
+
+func clearCorruptedAcl(sourceFolder string) error {
+	corruptedAcl := path.Join(sourceFolder, AclFileName)
+	if _, err := os.Stat(corruptedAcl); err == nil {
+		if err := os.Remove(corruptedAcl); err != nil {
+			return fmt.Errorf("removing corrupted acl file: %s", err)
+		}
+	}
+
 	return nil
 }
 
