@@ -18,6 +18,6 @@ func init() {
 }
 
 func versionRunE(cmd *cobra.Command, args []string) error {
-	fmt.Print("1.1.3")
+	fmt.Print("1.1.4")
 	return nil
 }

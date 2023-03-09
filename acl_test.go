@@ -33,9 +33,7 @@ func TestAcl_ValidateSignature(t *testing.T) {
 func TestAcl_EmptyAcl(t *testing.T) {
 	aclFolder := "/tmp/acl"
 	_ = os.RemoveAll(aclFolder)
-
-	var acl *Acl
-	acl = &Acl{}
+	acl := &Acl{}
 
 	signature, err := solana.NewSignatureFromBase58(signature)
 	require.NoError(t, err)

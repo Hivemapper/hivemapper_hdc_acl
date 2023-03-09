@@ -53,9 +53,9 @@ func NewAclFromFile(sourceFolder string) (*Acl, error) {
 }
 
 func NewAclFromData(data []byte) (*Acl, error) {
-	var acl *Acl
+	acl := &Acl{}
 
-	err := json.Unmarshal(data, &acl)
+	err := json.Unmarshal(data, acl)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshalling acl data: %s", err)
 	}
@@ -139,9 +139,23 @@ func (a *Acl) Store(destinationFolder string, signature solana.Signature) error 
 		panic("empty acl")
 	}
 
-	err = os.WriteFile(aclFile, data, 0644)
+	f, err := os.OpenFile(aclFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		return fmt.Errorf("writing acl file: %s", err)
+		return fmt.Errorf("opening file %w", err)
+	}
+
+	_, werr := f.Write(data)
+
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("synching file %w", err)
+	}
+
+	if cerr := f.Close(); cerr != nil && werr == nil {
+		return fmt.Errorf("closing file %w", cerr)
+	}
+
+	if werr != nil {
+		return fmt.Errorf("writing file %w", werr)
 	}
 
 	return nil
